@@ -143,22 +143,32 @@ float HashTable<T>::get_coef() const {
 
 template <typename T>
 bool HashTable<T>::Add(const std::string& key) {
+  if( _coef + 1./ _table_size >= COEF) {
+    this->rehashing();
+  }
   T hash_func;
+  size_t fd = _table_size;
   unsigned long long hash_value = hash_func(key, _table_size);
-  for(size_t i = 0; i < _table_size; ++i) {
+  for(size_t i = 0; i < _table_size && _status[hash_value] != Status::NIL; ++i) {
     if(_table[hash_value] == key && _status[hash_value] == Status::OCCUPED) {
       return false;
     }
-    if(_status[hash_value] == Status::NIL || _status[hash_value] == Status::DELETED) {
+    if(fd == _table_size && _status[hash_value] == Status::DELETED) {
       _table[hash_value] = key;
       _status[hash_value] = Status::OCCUPED;
-      _coef += 1. / _table_size;
-      if(_coef >= COEF) this->rehashing();
-      return true;
     }
     hash_value = hash_func(key, _table_size);
   }
-  return false;
+  if( fd != _table_size) {
+    _table[fd] = key;
+    _status[fd] = Status::OCCUPED;
+  }
+  else {
+    _table[hash_value] = key;
+    _status[hash_value] = Status::OCCUPED;
+  }
+  _coef += 1. / _table_size;
+  return true;
 }
 
 template <typename T>
@@ -189,7 +199,7 @@ bool HashTable<T>::Remove(const std::string & key) {
 
 
 int main(int argc, char** argv) {
-  HashTable<Square_probe<Horner_hash>> hash_table(8);
+  HashTable<Double_hashing<Horner_hash, rHorner_hash>> hash_table(8);
   char operation;
   std::string key;
   while(cin >> operation >> key) {
