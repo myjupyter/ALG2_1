@@ -147,26 +147,19 @@ bool HashTable<T>::Add(const std::string& key) {
     this->rehashing();
   }
   T hash_func;
-  size_t fd = _table_size;
   unsigned long long hash_value = hash_func(key, _table_size);
   for(size_t i = 0; i < _table_size && _status[hash_value] != Status::NIL; ++i) {
     if(_table[hash_value] == key && _status[hash_value] == Status::OCCUPED) {
       return false;
     }
-    if(fd == _table_size && _status[hash_value] == Status::DELETED) {
+    if(_status[hash_value] == Status::DELETED) {
       _table[hash_value] = key;
       _status[hash_value] = Status::OCCUPED;
-    }
+		}
     hash_value = hash_func(key, _table_size);
   }
-  if( fd != _table_size) {
-    _table[fd] = key;
-    _status[fd] = Status::OCCUPED;
-  }
-  else {
-    _table[hash_value] = key;
-    _status[hash_value] = Status::OCCUPED;
-  }
+  _table[hash_value] = key;
+  _status[hash_value] = Status::OCCUPED;
   _coef += 1. / _table_size;
   return true;
 }
